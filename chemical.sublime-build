@@ -1,0 +1,21 @@
+{
+	"folders":
+	[
+		{
+			"path": "/D/shenyin/newCode/project"
+		},
+		{
+			"path": "/D/project/spider/chemicalbook"
+		}
+	],
+
+    "build_systems":
+  [{
+    "name": "Spider CASLIST",
+    "cmd": ["python", "$file", "--CASLIST"]
+  },
+  {
+    "name": "Spider CASLIST CLEAR",
+    "cmd": ["python", "$file", "--clear", "--CASLIST"]
+  }]
+}

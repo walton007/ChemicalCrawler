@@ -1,0 +1,10 @@
+1）抓取chemicalbook基于CAS号码的化合物信息
+http://www.chemicalbook.com/ProductCASList_12_0.htm
+
+2）抓取chemicalbook基于产品首字母排列的化合物信息
+A开头的有
+
+3）http://www.chemicalbook.com/CASDetailList_0.htm
+抓取CAS细节列表，注意和前面的信息是否有重复。
+3.1 点击中文名称，抓取相关信息
+3.2 点击CAS，抓取相关信息
