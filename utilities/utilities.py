@@ -1,5 +1,5 @@
 #html page encoding
-#encoding = 'utf-8'
+encoding = 'utf-8'
 encoding = None
 def getEncoding(content):
     if encoding is None:

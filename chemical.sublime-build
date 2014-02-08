@@ -17,5 +17,8 @@
   {
     "name": "Spider CASLIST CLEAR",
     "cmd": ["python", "$file", "--clear", "--CASLIST"]
+  }, {
+    "name": "Spider NAMELIST",
+    "cmd": ["python", "$file", "--NAMELIST"]
   }]
 }

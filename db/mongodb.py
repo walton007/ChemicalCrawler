@@ -6,10 +6,15 @@ class DBWrapper(object):
         self.db = db
 
     def insert(self, schema, obj):
+        #return
         collection = self.db[schema]
-        collection.insert(obj.__dict__)
+        if isinstance(obj, dict):
+            collection.insert(obj)
+        else:
+            collection.insert(obj.__dict__)
 
     def ClearScheme(self, schema):
+        #return
         collection = self.db[schema]
         collection.drop()
 

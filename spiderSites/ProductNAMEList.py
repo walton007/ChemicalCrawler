@@ -3,14 +3,13 @@ from lxml import html
 from utilities.utilities import getEncoding
 from utilities.logger import GetLogger
 from utilities.timeUtility import SleepTimer
-from model import ChemiInfo
+from model.chemiInfo import ChemiInfo
 
 logger = GetLogger()
 
 #db is pymongo.db
 cnt = 0
-def SpiderProductCASList(entryURL, cbChemiInfoHandler):
-    print 33
+def SpiderProductNAMEList(entryURL, cbChemiInfoHandler):
     visitedURLs = set()
     unvisitedURLs = []
     logger.info( 'entryURL:'+ entryURL)
@@ -20,14 +19,12 @@ def SpiderProductCASList(entryURL, cbChemiInfoHandler):
 
     def visitURL(targetURL):
         logger.info('begin visit url: '+targetURL)
-        print 'target:', targetURL
-
         global cnt
         cnt = cnt+1
 
         timer = SleepTimer(2)
 
-        if cnt > 999999:
+        if cnt > 1200:
             logger.warn( 'Early Return')
             return
 
@@ -35,16 +32,20 @@ def SpiderProductCASList(entryURL, cbChemiInfoHandler):
         content = content.decode(getEncoding(content))
         doc = html.document_fromstring(content)
 
-        print doc
-
         if cnt == 1:
-            #all CAS names from 1->9
-            all1to9 = doc.cssselect('#_ctl0_ContentPlaceHolder1_ProductClassLink a')
-            for alink in all1to9:
+            #all product names from A->Z
+            allAZ = doc.cssselect('#_ctl0_ContentPlaceHolder1_ProductClassLink a')
+            for alink in allAZ:
                 href = alink.get('href')
                 unvisitedURLs.insert(0, href)
+        if cnt == 2:
+            #for debug usage
+            return
 
         alltrs = doc.cssselect('table tr')
+        if len(alltrs) == 0:
+            return
+
         for tr in alltrs[1:]:
             tds = tr.cssselect('td')
             enNameElem, zhNameElem, casElem, mfElem = tds
@@ -54,19 +55,15 @@ def SpiderProductCASList(entryURL, cbChemiInfoHandler):
             enName = alink.text
 
             #get zhName and zhNameLink
-            alink = zhNameElem.cssselect('a')[0]
-            zhNameLink = alink.get('href')
-            zhName = alink.text
+            zhName = zhNameElem.cssselect('span')[0].text
 
             #get CAS and CASLink
-            alink = casElem.cssselect('a')[0]
-            casLink = alink.get('href')
-            cas = alink.text
+            cas = casElem.cssselect('span')[0].text
 
             #get mf
             mf = mfElem.cssselect('span')[0].text
 
-            chemInfo = ChemiInfo(enName, zhName, enNameLink, zhNameLink, cas, casLink, mf)
+            chemInfo = ChemiInfo(enName, zhName, enNameLink, None, cas, None, mf)
             if cbChemiInfoHandler:
                 cbChemiInfoHandler.process(chemInfo)
 
@@ -79,10 +76,8 @@ def SpiderProductCASList(entryURL, cbChemiInfoHandler):
             if href in visitedURLs:
                 continue
             else:
-                unvisitedURLs.append(href)
                 unvisitedURLs.insert(0, href)
                 incLink = incLink+1
-
 
         logger.info( 'end visit url, visit cnt: '+str(cnt))
         timer.conditionSleep()
@@ -97,12 +92,6 @@ def SpiderProductCASList(entryURL, cbChemiInfoHandler):
         targetURL = '/'.join([baseHref, urlPath])
         visitURL(targetURL)
 
+
 if __name__ == '__main__':
-    targetURL = r'''http://www.chemicalbook.com/ProductCASList_12_0.htm'''
-    content = urllib2.urlopen(targetURL).read()
-    content = content.decode('UTF-8')
-    doc = html.document_fromstring(content)
-    otherLinks = doc.cssselect('a[onclick="blur()"]')
-    for ele in otherLinks:
-        href = ele.get('href')
-        print href
+    print 'SpiderProductNAMEList'
