@@ -1,4 +1,10 @@
 import pymongo
+from myConfig import GetGlobalConfig
+globalConfig = GetGlobalConfig()
+dbhost = globalConfig['dbhost']
+dbport = globalConfig['dbport']
+print 'dbhost:', dbhost
+print 'dbport:', dbport
 
 #object should be some interface like insert interface
 class DBWrapper(object):
@@ -6,9 +12,10 @@ class DBWrapper(object):
         self.db = db
 
     def insert(self, schema, obj):
-        #return
         collection = self.db[schema]
         if isinstance(obj, dict):
+            print 'insert: ', len(obj)
+            print 'schema: ', schema
             collection.insert(obj)
         else:
             collection.insert(obj.__dict__)
@@ -19,7 +26,7 @@ class DBWrapper(object):
         collection.drop()
 
 class MongoDBFactory(object):
-    connection=pymongo.Connection('localhost',27017)
+    connection=pymongo.Connection(dbhost, dbport)
     @classmethod
     def GetDB(cls, dbName):
         return DBWrapper(cls.connection[dbName])

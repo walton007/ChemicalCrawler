@@ -2,3 +2,4 @@
 *.pydevproject
 *.prefs
 *.pyc
+dist/

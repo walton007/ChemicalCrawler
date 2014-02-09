@@ -1,10 +1,16 @@
+from myConfig import GetSleepDuration, GetGlobalConfig
+globalConfig = GetGlobalConfig()
+
 import urllib2
+
+if len(globalConfig['httpProxy']) > 7:
+    proxy = globalConfig['httpProxy'] #'http://127.0.0.1:8087'
+    proxy_support = urllib2.ProxyHandler({'http': proxy})
+    opener = urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
+    urllib2.install_opener(opener)
+
+
 from lxml import html
-
-
-from model.chemiInfo import ChemiInfo
-from model.chemiDetailInfo import *
-
 
 from utilities.utilities import getEncoding
 from utilities.logger import GetLogger
@@ -13,8 +19,10 @@ from utilities.timeUtility import SleepTimer
 logger = GetLogger()
 baseHref = 'http://www.chemicalbook.com'
 
+
 def GetCASDetail(casURL):
     logger.info('  begin get CASDetail:'+casURL)
+    timer = SleepTimer(GetSleepDuration())
     content = urllib2.urlopen(casURL).read()
     content = content.decode(getEncoding(content))
     doc = html.document_fromstring(content)
@@ -53,6 +61,8 @@ def GetCASDetail(casURL):
         pass
 
     logger.info('  end get CASDetail:'+casURL)
+    timer.conditionSleep();
+
     return {    'CAS' : CAS,
     'enName' :enName,
     'enSynonym' :enSynonym,
@@ -65,13 +75,10 @@ def GetCASDetail(casURL):
     'chemicalProperties': chemicalPropertiesObj
     }
 
-
-
 #db is pymongo.db
 cnt = 0
-def SpiderCASIDList(entryURL, cbChemiInfoHandler):
-    global baseHref
-    print 33
+def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
+    global baseHref, sleepDuration
     visitedURLs = set()
     unvisitedURLs = []
     logger.info( 'entryURL:'+ entryURL)
@@ -80,36 +87,26 @@ def SpiderCASIDList(entryURL, cbChemiInfoHandler):
     unvisitedURLs.append(entryUrlPath)
 
     def visitURL(targetURL):
-        logger.info('begin visit url: '+targetURL)
-        print 'target:', targetURL
-
         global cnt
         cnt = cnt+1
 
-        timer = SleepTimer(2)
+        logger.info('begin visit url: '+targetURL+str(cnt))
 
-        if cnt > 999999:
-            logger.error( 'Early Return')
-            return
+        timer = SleepTimer(GetSleepDuration())
 
         content = urllib2.urlopen(targetURL).read()
         content = content.decode(getEncoding(content))
         doc = html.document_fromstring(content)
 
-        if cnt == 1:
+        if crawlAllPage and cnt == 1:
             #all CAS names from 1->9
             all1to9 = doc.cssselect('td.detailLtd a')
             for alink in all1to9:
                 href = alink.get('href')
                 unvisitedURLs.insert(0, href)
 
-        if cnt == 2:
-            #for debug usage
-            #return
-            pass
-
         allOthersLinks = doc.cssselect('td[colspan="2"] a')[1:]
-        print 'allOthersLinks: ', len(allOthersLinks)
+        logger.info( 'allOthersLinks: '+str( len(allOthersLinks) ) )
         for alink in allOthersLinks:
             href = alink.get('href')
             if href in visitedURLs:

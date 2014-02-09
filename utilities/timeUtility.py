@@ -11,6 +11,7 @@ class SleepTimer(object):
     def conditionSleep(self):
         endtime = time.clock()
         elapsed = endtime - self.starttime
+        print 'elapsed: %s sleepSeconds: %s'%(elapsed, self.sleepSeconds)
         if elapsed < self.sleepSeconds:
             sleepDuration = self.sleepSeconds - elapsed
             logger.info('sleep for %s seconds'%str(sleepDuration))

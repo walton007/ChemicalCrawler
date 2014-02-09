@@ -45,23 +45,32 @@ def DoSpiderCASIDList():
     logger.info('DoSpiderCASIDList')
     from spiderSites.CASIDList import SpiderCASIDList
     from spiderSites.CASIDListStrategy import HandleCASIDListStrategy
+    from myConfig import GetGlobalConfig
+    globalConfig = GetGlobalConfig()
+    entryURL= globalConfig['entryURL']
+    dbclear = globalConfig['dbclear']
+    dbschema = globalConfig['dbschema']
+    crawlAllPage = globalConfig['crawlAllPage']
 
-    clear = True if '--CLEAR' in sys.argv else False
     db = mongodb.MongoDBFactory.GetDB(dbName)
-    entryURL= 'http://www.chemicalbook.com/ShowAllProductByIndexID_CAS_16_0.htm'
-    #entryURL= 'http://www.chemicalbook.com/ShowAllProductByIndexID_CAS_14_0.htm'
-    SpiderCASIDList(entryURL, HandleCASIDListStrategy(db, clear))
+    SpiderCASIDList(entryURL, crawlAllPage, HandleCASIDListStrategy(db, dbclear, dbschema))
 
-if __name__ == '__main__':
-    if '--CASLIST' in sys.argv:
-        SetLoggerFileName('caslist')
-        DoSpiderProductCASList()
-    if '--ProductNameLIST' in sys.argv:
-        SetLoggerFileName('namelist')
-        DoSpiderProductNameList()
-    if '--DetailCASLIST' in sys.argv:
-        SetLoggerFileName('detailCASList')
-        DoSpiderCASDetailList()
-    if True or '--CASIDLIST' in sys.argv:
-        SetLoggerFileName('CASIDList')
-        DoSpiderCASIDList()
+from myConfig import GetGlobalConfig
+globalConfig = GetGlobalConfig()
+print globalConfig
+while False:
+    pass
+
+if '--CASLIST' in sys.argv:
+    SetLoggerFileName('caslist')
+    DoSpiderProductCASList()
+if '--ProductNameLIST' in sys.argv:
+    SetLoggerFileName('namelist')
+    DoSpiderProductNameList()
+if '--DetailCASLIST' in sys.argv:
+    SetLoggerFileName('detailCASList')
+    DoSpiderCASDetailList()
+if True or '--CASIDLIST' in sys.argv:
+    filename = globalConfig['filename']
+    SetLoggerFileName(filename)
+    DoSpiderCASIDList()

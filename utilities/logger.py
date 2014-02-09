@@ -13,7 +13,9 @@ def GetLogger():
     return logger
 
 def SetLoggerFileName(fn):
-    file_handler = logging.FileHandler("./log/%s.log"%fn)
+    if not fn.endswith('.log'):
+        fn = "./log/%s.log"%fn
+    file_handler = logging.FileHandler(fn)
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.INFO)
     logger.addHandler(file_handler)
