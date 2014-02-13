@@ -75,5 +75,6 @@ if '--DetailCASLIST' in sys.argv:
 if True or '--CASIDLIST' in sys.argv:
     filename = globalConfig['filename']
     SetLoggerFileName(filename)
-    logger.info('PID: %s'%(os.getpid( )))
+
     DoSpiderCASIDList()
+    logger.info('Finish!')
