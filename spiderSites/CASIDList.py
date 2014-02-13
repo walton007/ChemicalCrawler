@@ -98,7 +98,7 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         global cnt
         cnt = cnt+1
 
-        logger.info('begin visit url: '+targetURL+' Cnt:' + str(cnt))
+        logger.info('[cnt %s] begin visit url: '%str(cnt)+targetURL )
 
         timer = SleepTimer(GetSleepDuration())
 
@@ -139,7 +139,7 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
                 errVisitPages.append(casDetailLink)
 
 
-        logger.info( 'end visit url, visit cnt: '+str(cnt))
+        logger.info( '[end visit cnt %s]  end visit url, visit cnt: '%str(cnt))
         timer.conditionSleep()
 
 

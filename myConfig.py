@@ -52,8 +52,8 @@ def UpdateConfig(updateAll):
 
             globalConfig['filename'] = cf.get("log", "filename")
 
-            globalConfig['debugOpen']=cf.get("debug", "open")
-            globalConfig['debugOnePage']=cf.get("debug", "onepage")
+            globalConfig['debugOpen']=cf.getboolean("debug", "open")
+            globalConfig['debugOnePage']=cf.getboolean("debug", "onepage")
 
         print globalConfig
     except Exception as err:
