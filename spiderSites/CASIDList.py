@@ -2,6 +2,9 @@ from myConfig import GetSleepDuration, GetGlobalConfig
 globalConfig = GetGlobalConfig()
 
 import urllib2
+import socket
+
+socket.setdefaulttimeout(20)
 
 if len(globalConfig['httpProxy']) > 7:
     proxy = globalConfig['httpProxy'] #'http://127.0.0.1:8087'
@@ -18,12 +21,14 @@ from utilities.timeUtility import SleepTimer
 
 logger = GetLogger()
 baseHref = 'http://www.chemicalbook.com'
-
+errVisitPages = []
 
 def GetCASDetail(casURL):
     logger.info('  begin get CASDetail:'+casURL)
     timer = SleepTimer(GetSleepDuration())
-    content = urllib2.urlopen(casURL).read()
+    request = urllib2.urlopen(casURL)
+    content = request.read()
+    request.close()
     content = content.decode(getEncoding(content))
     doc = html.document_fromstring(content)
 
@@ -39,7 +44,10 @@ def GetCASDetail(casURL):
     molecular = trs[6].cssselect('td')[1].text
     formula = trs[7].cssselect('td')[1].text
     mofilelink = trs[8].cssselect('td a')[0].get('href')
-    mofile = urllib2.urlopen('/'.join([baseHref, mofilelink])).read()
+
+    request = urllib2.urlopen('/'.join([baseHref, mofilelink]))
+    mofile = request.read()
+    request.close()
     mofile = mofile.decode(getEncoding(mofile))
 
     chemicalPropertiesObj = {}
@@ -90,11 +98,13 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         global cnt
         cnt = cnt+1
 
-        logger.info('begin visit url: '+targetURL+str(cnt))
+        logger.info('begin visit url: '+targetURL+' Cnt:' + str(cnt))
 
         timer = SleepTimer(GetSleepDuration())
 
-        content = urllib2.urlopen(targetURL).read()
+        request = urllib2.urlopen(targetURL)
+        content = request.read()
+        request.close()
         content = content.decode(getEncoding(content))
         doc = html.document_fromstring(content)
 
@@ -116,11 +126,17 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
 
         allCASLinks = doc.cssselect('td.style2 a')
         for i in xrange(0,len(allCASLinks),2):
-            casDetailLink = allCASLinks[i].get('href')
-            #visit CAS detail
-            cas = GetCASDetail('/'.join([baseHref, casDetailLink]))
-            if cbChemiInfoHandler:
-                cbChemiInfoHandler.process(cas)
+            try:
+                casDetailLink = allCASLinks[i].get('href')
+                casDetailLink = '/'.join([baseHref, casDetailLink])
+                #visit CAS detail
+                cas = GetCASDetail(casDetailLink)
+                if cbChemiInfoHandler:
+                    cbChemiInfoHandler.process(cas)
+            except Exception as err:
+                logger.error('  visit cas URL %s failed'%casDetailLink)
+                logger.error(str(err))
+                errVisitPages.append(casDetailLink)
 
 
         logger.info( 'end visit url, visit cnt: '+str(cnt))
@@ -132,6 +148,9 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         if urlPath in visitedURLs:
             continue
 
+        if globalConfig['debugOpen'] and cnt > 0:
+            break
+
         #visit this url and get html page
         targetURL = '/'.join([baseHref, urlPath])
 
@@ -141,6 +160,13 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         except Exception as err:
             logger.error('visitURL %s failed'%targetURL)
             logger.error(str(err))
+            errVisitPages.append(targetURL)
+
+    if len(errVisitPages) > 0:
+        logger.error('All bad visit urls begin: ')
+        for url in errVisitPages:
+            logger.error(url)
+        logger.error('End')
 
 if __name__ == '__main__':
     GetCASDetail('http://www.chemicalbook.com/ChemicalProductProperty_CN_CB4853677.htm')

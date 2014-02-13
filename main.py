@@ -1,4 +1,5 @@
 # encoding=utf-8
+import os
 import sys
 reload(sys)
 sys.setdefaultencoding('gb2312')
@@ -61,6 +62,7 @@ print globalConfig
 while False:
     pass
 
+
 if '--CASLIST' in sys.argv:
     SetLoggerFileName('caslist')
     DoSpiderProductCASList()
@@ -73,4 +75,5 @@ if '--DetailCASLIST' in sys.argv:
 if True or '--CASIDLIST' in sys.argv:
     filename = globalConfig['filename']
     SetLoggerFileName(filename)
+    logger.info('PID: %s'%(os.getpid( )))
     DoSpiderCASIDList()

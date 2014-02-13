@@ -1,8 +1,15 @@
 import ConfigParser
 import os
+import sys
 from datetime import datetime
 
 filePath = "chem.conf"
+len(sys.argv)
+for i in xrange(0, len(sys.argv)):
+    if sys.argv[i] == '-conf':
+        filePath = sys.argv[i+1]
+        break
+
 modifiedTime = None
 
 globalConfig = {
@@ -17,7 +24,10 @@ globalConfig = {
     'entryURL': 'http://www.chemicalbook.com/ShowAllProductByIndexID_CAS_16_0.htm',
     'httpProxy':'',
 
-    'filename': 'test.log'
+    'filename': 'test.log',
+
+    'debugOpen': False,
+    'debugOnePage': False
 }
 
 def UpdateConfig(updateAll):
@@ -41,6 +51,9 @@ def UpdateConfig(updateAll):
             globalConfig['httpProxy'] = cf.get("crawl", "httpProxy")
 
             globalConfig['filename'] = cf.get("log", "filename")
+
+            globalConfig['debugOpen']=cf.get("debug", "open")
+            globalConfig['debugOnePage']=cf.get("debug", "onepage")
 
         print globalConfig
     except Exception as err:

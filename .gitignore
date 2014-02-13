@@ -2,4 +2,5 @@
 *.pydevproject
 *.prefs
 *.pyc
+*.log
 dist/
