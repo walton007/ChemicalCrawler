@@ -17,6 +17,7 @@ globalConfig = {
     'dbport': '27017',
     'dbclear': False,
     'dbschema':'',
+    'dbstSchema':'statis',
     'dbuser': 'walton',
     'dbpassword': 'walton',
     'dbanonymous': True,
@@ -52,6 +53,7 @@ def UpdateConfig(updateAll):
             globalConfig['dbuser'] = cf.get("db", "user")
             globalConfig['dbpassword'] = cf.get("db", "password")
             globalConfig['dbanonymous'] = cf.getboolean("db", "anonymous")
+            globalConfig['dbstSchema'] = cf.get("db", "stSchema")
 
             globalConfig['crawlAllPage'] = cf.getboolean("crawl", "crawlAllPage")
             globalConfig['entryURL'] = cf.get("crawl", "entryURL")

@@ -8,11 +8,10 @@ import socket
 
 socket.setdefaulttimeout(5)
 
+from utilities.proxy import SwitchProxy
+
 if len(globalConfig['httpProxy']) > 7:
-    proxy = globalConfig['httpProxy'] #'http://127.0.0.1:8087'
-    proxy_support = urllib2.ProxyHandler({'http': proxy})
-    opener = urllib2.build_opener(proxy_support, urllib2.HTTPHandler)
-    urllib2.install_opener(opener)
+    SwitchProxy()
 
 
 from lxml import html
@@ -26,73 +25,75 @@ htmllogger = GetHtmlLogger()
 baseHref = 'http://www.chemicalbook.com'
 errVisitPages = []
 
+from db.statUtil import StatisticHelper
+gStatisticHelper = StatisticHelper(globalConfig['dbstSchema'])
+
 def GetCASDetail(casURL):
     logger.info('  begin get CASDetail:'+casURL)
     timer = SleepTimer(GetSleepDuration())
 
     tryCnts = 1
     while True:
-        request = urllib2.urlopen(casURL)
-        content = request.read()
-        request.close()
-        format = getEncoding(content)
-        if format is None:
+        try:
+            request = urllib2.urlopen(casURL)
+            content = request.read()
+            request.close()
+            format = getEncoding(content)
+            content = content.decode(format)
+            doc = html.document_fromstring(content)
+
+            #parse ProductIntroduction
+            cssList = doc.cssselect('#ProductIntroduction table[border="0"]')
+            if len(cssList) == 0:
+                logger.error('#ProductIntroduction table[border="0"] failed')
+            ProductIntroduction = cssList[0]
+
+            trs = ProductIntroduction.cssselect('tr')
+            CAS = trs[0].getprevious().cssselect('b')[0].text
+            enName = trs[0].cssselect('td b')[0].text
+            enSynonym = trs[1].cssselect('td')[1].text
+            zhName = trs[2].cssselect('td b')[0].text
+            zhSynonym = trs[3].cssselect('td')[1].text
+            CBNumber = trs[4].cssselect('td')[1].text
+            molecular = trs[6].cssselect('td')[1].text
+            formula = trs[7].cssselect('td')[1].text
+            mofilelink = trs[8].cssselect('td a')[0].get('href')
+
+            request = urllib2.urlopen('/'.join([baseHref, mofilelink]))
+            mofile = request.read()
+            request.close()
+            mofile = mofile.decode(getEncoding(mofile))
+
+            chemicalPropertiesObj = {}
+            ChemicalPropertiesArray = doc.cssselect('#ChemicalProperties')
+            if len(ChemicalPropertiesArray) > 0:
+                ChemicalProperties = ChemicalPropertiesArray[0]
+                propertiesNameArray = ChemicalProperties.cssselect('table tr td.detailLtd span')
+                propertiesValueArray = ChemicalProperties.cssselect('table tr td.detailRtd span')
+                if len(propertiesNameArray) != len(propertiesValueArray):
+                    logger.error(casURL+' ChemicalPropertiesArray not equal')
+                else:
+                    for i in xrange(0, len(propertiesNameArray)):
+                        valElement = propertiesValueArray[i]
+                        if len(valElement.cssselect('a')) > 0:
+                            continue
+                        nameElement = propertiesNameArray[i]
+                        chemicalPropertiesObj[nameElement.text] = valElement.text
+            else:
+                pass
+
+            #success pass
+            break
+
+        except Exception as err:
             tryCnts = tryCnts+1
             if tryCnts > 10:
                 raise ReadURLException("can't open url %s"%casURL)
 
-            logger.warn('content format is none, sleep for %s'%seconds)
-            seconds = GetWaitDuration()
-            SleepTimer(seconds).conditionSleep()
-
-            logger.info('try get for %s time'%tryCnts)
+            logger.warn('  get CAS Detail Not success: %s'%casURL)
+            logger.info('  try get for %s time'%tryCnts)
+            SwitchProxy()
             continue
-
-        content = content.decode(format)
-        doc = html.document_fromstring(content)
-
-        #parse ProductIntroduction
-        cssList = doc.cssselect('#ProductIntroduction table[border="0"]')
-        if len(cssList) == 0:
-            logger.error('#ProductIntroduction table[border="0"] failed')
-        ProductIntroduction = cssList[0]
-
-        trs = ProductIntroduction.cssselect('tr')
-        CAS = trs[0].getprevious().cssselect('b')[0].text
-        enName = trs[0].cssselect('td b')[0].text
-        enSynonym = trs[1].cssselect('td')[1].text
-        zhName = trs[2].cssselect('td b')[0].text
-        zhSynonym = trs[3].cssselect('td')[1].text
-        CBNumber = trs[4].cssselect('td')[1].text
-        molecular = trs[6].cssselect('td')[1].text
-        formula = trs[7].cssselect('td')[1].text
-        mofilelink = trs[8].cssselect('td a')[0].get('href')
-
-        request = urllib2.urlopen('/'.join([baseHref, mofilelink]))
-        mofile = request.read()
-        request.close()
-        mofile = mofile.decode(getEncoding(mofile))
-
-        chemicalPropertiesObj = {}
-        ChemicalPropertiesArray = doc.cssselect('#ChemicalProperties')
-        if len(ChemicalPropertiesArray) > 0:
-            ChemicalProperties = ChemicalPropertiesArray[0]
-            propertiesNameArray = ChemicalProperties.cssselect('table tr td.detailLtd span')
-            propertiesValueArray = ChemicalProperties.cssselect('table tr td.detailRtd span')
-            if len(propertiesNameArray) != len(propertiesValueArray):
-                logger.error(casURL+' ChemicalPropertiesArray not equal')
-            else:
-                for i in xrange(0, len(propertiesNameArray)):
-                    valElement = propertiesValueArray[i]
-                    if len(valElement.cssselect('a')) > 0:
-                        continue
-                    nameElement = propertiesNameArray[i]
-                    chemicalPropertiesObj[nameElement.text] = valElement.text
-        else:
-            pass
-
-        #success pass
-        break
 
     logger.info('  end get CASDetail:'+casURL)
     timer.conditionSleep();
@@ -172,8 +173,15 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
             try:
                 casDetailLink = allCASLinks[i].get('href')
                 casDetailLink = '/'.join([baseHref, casDetailLink])
+
+                #if visited then ignore
+                if gStatisticHelper.isUrlVisited(casDetailLink):
+                    logger.info(' %s already visited, so skip it'%casDetailLink)
+                    continue
+
                 #visit CAS detail
                 cas = GetCASDetail(casDetailLink)
+                gStatisticHelper.markUrlVisited(casDetailLink)
                 if cbChemiInfoHandler:
                     cbChemiInfoHandler.process(cas)
             except Exception as err:
@@ -216,6 +224,7 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
                         logger.warn(' try to visit more than 10 time for url %s, so give up...'%targetURL)
                         break
                     else:
+                        SwitchProxy()
                         #Sleep for some time
                         seconds = GetWaitDuration()
                         SleepTimer(seconds).conditionSleep()
