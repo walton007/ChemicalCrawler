@@ -159,4 +159,4 @@ WHERE
 '''
 delete  from bingo."MolTable";
 delete  from bingo."record";
-''
+'''
