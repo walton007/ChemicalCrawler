@@ -6,7 +6,8 @@ from myexcept.myException import ReadURLException
 import urllib2
 import socket
 
-socket.setdefaulttimeout(5)
+# curl -x http://127.0.0.1:51984 http://www.chemicalbook.com/ShowAllProductByIndexID_CAS_12_0.htm
+socket.setdefaulttimeout(50)
 
 from utilities.proxy import SwitchProxy
 
