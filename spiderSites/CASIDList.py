@@ -16,6 +16,7 @@ if len(globalConfig['httpProxy']) > 7:
 
 
 from lxml import html
+from bs4 import BeautifulSoup
 
 from utilities.utilities import getEncoding
 from utilities.logger import GetLogger, GetHtmlLogger
@@ -41,7 +42,8 @@ def GetCASDetail(casURL):
             request.close()
             format = getEncoding(content)
             content = content.decode(format)
-            doc = html.document_fromstring(content)
+            soup = BeautifulSoup(content)
+            doc = html.document_fromstring(soup.prettify())
 
             #parse ProductIntroduction
             cssList = doc.cssselect('#ProductIntroduction table[border="0"]')
@@ -139,7 +141,8 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         content = request.read()
         request.close()
         content = content.decode(getEncoding(content))
-        doc = html.document_fromstring(content)
+        soup = BeautifulSoup(content)
+        doc = html.document_fromstring(soup.prettify())
 
         #if no all other links, means serve have block this ip
         allOthersLinks = doc.cssselect('td[colspan="2"] a')[1:]
@@ -251,7 +254,9 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
 
 
 def testGetCASDetail():
-    GetCASDetail('http://www.chemicalbook.com/ChemicalProductProperty_CN_CB4853677.htm')
+    GetCASDetail('http://www.chemicalbook.com/ChemicalProductProperty_CN_CB8417130.htm')
+    GetCASDetail('http://www.chemicalbook.com/ChemicalProductProperty_CN_CB3948424.htm')
+
 
 if __name__ == '__main__':
     testGetCASDetail()

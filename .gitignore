@@ -6,3 +6,4 @@
 dist/
 *.iml
 *.xml
+chem.conf
