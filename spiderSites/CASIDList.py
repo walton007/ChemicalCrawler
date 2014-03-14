@@ -63,7 +63,9 @@ def GetCASDetail(casURL):
             request = urllib2.urlopen('/'.join([baseHref, mofilelink]))
             mofile = request.read()
             request.close()
-            mofile = mofile.decode(getEncoding(mofile))
+            filecodec = getEncoding(mofile)
+            if filecodec is not None:
+                mofile = mofile.decode(filecodec)
 
             chemicalPropertiesObj = {}
             ChemicalPropertiesArray = doc.cssselect('#ChemicalProperties')
@@ -136,14 +138,6 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         content = content.decode(getEncoding(content))
         doc = html.document_fromstring(content)
 
-        if crawlAllPage and not initialized:
-            #all CAS names from 1->9
-            all1to9 = doc.cssselect('td.detailLtd a')
-            for alink in all1to9:
-                href = alink.get('href')
-                unvisitedURLs.insert(0, href)
-            initialized = True
-
         #if no all other links, means serve have block this ip
         allOthersLinks = doc.cssselect('td[colspan="2"] a')[1:]
         logger.info( 'allOthersLinks: '+str( len(allOthersLinks) ) )
@@ -190,6 +184,14 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
                 logger.error(str(err))
                 errVisitPages.append(casDetailLink)
 
+
+        if crawlAllPage and not initialized:
+            #all CAS names from 1->9
+            all1to9 = doc.cssselect('td.detailLtd a')
+            for alink in all1to9:
+                href = alink.get('href')
+                unvisitedURLs.insert(0, href)
+            initialized = True
 
         logger.info( '[end visit cnt %s]  end visit url, visit cnt: '%str(cnt))
         timer.conditionSleep()
@@ -240,7 +242,13 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         logger.error('All bad visit urls begin: ')
         for url in errVisitPages:
             logger.error(url)
+            gStatisticHelper.markUrlBadVisited(url)
         logger.error('End')
 
-if __name__ == '__main__':
+
+
+def testGetCASDetail():
     GetCASDetail('http://www.chemicalbook.com/ChemicalProductProperty_CN_CB4853677.htm')
+
+if __name__ == '__main__':
+    testGetCASDetail()

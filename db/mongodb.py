@@ -36,7 +36,7 @@ class DBWrapper(object):
         else:
             collection.insert(obj.__dict__)
 
-    def find(self, schema, conditonObj):
+    def find(self, schema, conditonObj=None):
         collection = self.db[schema]
         return collection.find(conditonObj)
 

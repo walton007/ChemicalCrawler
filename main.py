@@ -78,4 +78,12 @@ if True or '--CASIDLIST' in sys.argv:
     logger.info('PID: %s'%(os.getpid( )))
     logger.info(str(globalConfig))
     DoSpiderCASIDList()
+
+    # from spiderSites.CASIDList import testGetCASDetail
+    # testGetCASDetail()
+
     logger.info('Finish!')
+
+
+# from db.statUtil import test
+# test()

@@ -25,7 +25,7 @@ def SetLoggerFileName(fn):
         fn = "./log/%s.log"%fn
     file_handler = logging.FileHandler(fn)
     file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
+    file_handler.setLevel(logging.WARN)
     logger.addHandler(file_handler)
 
 
@@ -35,7 +35,7 @@ def SetLoggerFileName(fn):
         fnhtml = fn
     htmlfile_handler = logging.FileHandler(fnhtml)
     htmlfile_handler.setFormatter(formatter)
-    htmlfile_handler.setLevel(logging.INFO)
+    htmlfile_handler.setLevel(logging.WARN)
     htmllogger.addHandler(htmlfile_handler)
 
 
