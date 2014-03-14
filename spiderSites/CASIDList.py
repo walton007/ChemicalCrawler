@@ -65,7 +65,10 @@ def GetCASDetail(casURL):
             request.close()
             filecodec = getEncoding(mofile)
             if filecodec is not None:
-                mofile = mofile.decode(filecodec)
+                try:
+                    mofile = mofile.decode(filecodec)
+                except Exception as errDecode:
+                    logger.warn('decode mofile fail %s err:%s'%('/'.join([baseHref, mofilelink]), errDecode))
 
             chemicalPropertiesObj = {}
             ChemicalPropertiesArray = doc.cssselect('#ChemicalProperties')
