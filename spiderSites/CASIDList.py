@@ -62,15 +62,19 @@ def GetCASDetail(casURL):
             formula = trs[7].cssselect('td')[1].text
             mofilelink = trs[8].cssselect('td a')[0].get('href')
 
-            request = urllib2.urlopen('/'.join([baseHref, mofilelink]))
-            mofile = request.read()
-            request.close()
-            filecodec = getEncoding(mofile)
-            if filecodec is not None:
-                try:
-                    mofile = mofile.decode(filecodec)
-                except Exception as errDecode:
-                    logger.warn('decode mofile fail %s err:%s'%('/'.join([baseHref, mofilelink]), errDecode))
+            try:
+                request = urllib2.urlopen('/'.join([baseHref, mofilelink]))
+                mofile = request.read()
+                request.close()
+                filecodec = getEncoding(mofile)
+                if filecodec is not None:
+                    try:
+                        mofile = mofile.decode(filecodec)
+                    except Exception as errDecode:
+                        logger.warn('decode mofile fail %s err:%s'%('/'.join([baseHref, mofilelink]), errDecode))
+            except Exception as errGetMolfile:
+                logger.info( 'errGetMolfile:'+ errGetMolfile.message)
+                mofile = ''
 
             chemicalPropertiesObj = {}
             ChemicalPropertiesArray = doc.cssselect('#ChemicalProperties')
@@ -141,8 +145,9 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         content = request.read()
         request.close()
         content = content.decode(getEncoding(content))
-        soup = BeautifulSoup(content)
-        doc = html.document_fromstring(soup.prettify())
+        #soup = BeautifulSoup(content)
+        #doc = html.document_fromstring(soup.prettify())
+        doc = html.document_fromstring(content)
 
         #if no all other links, means serve have block this ip
         allOthersLinks = doc.cssselect('td[colspan="2"] a')[1:]
