@@ -3,13 +3,16 @@ from mongodb import MongoDBFactory
 class StatisticHelper(object):
     def   __init__(self, scheme):
         self.db = MongoDBFactory.GetDB('statisticDB')
+        self.dbOne = MongoDBFactory.GetDB('chemicalDB')
         self.scheme = scheme
         self.allVisitedSet = set()
+        '''
         print 'start load statistic data'
         for rec in self.db.find(scheme):
             if rec['visitStatus'] == 'visited':
                 self.allVisitedSet.add(rec['urlpath'])
         print 'end load statistic data len rec:', len(self.allVisitedSet)
+        '''
 
 
     def isUrlVisited(self, url):
@@ -25,6 +28,10 @@ class StatisticHelper(object):
     def markUrlBadVisited(self, url):
         self.db.insert(self.scheme, {'urlpath': url, 'visitStatus': 'badvisited'})
         self.allVisitedSet.add(url)
+
+    def isCASVisited(self, cas):
+        rst = self.dbOne.find('OneDB', {"CAS": cas})
+        return rst.count() > 0
 
     def reset(self):
         pass

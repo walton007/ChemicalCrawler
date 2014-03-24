@@ -66,8 +66,8 @@ def GetCASDetail(casURL):
                 request = urllib2.urlopen('/'.join([baseHref, mofilelink]))
                 mofile = request.read()
                 request.close()
-                filecodec = getEncoding(mofile)
-                if filecodec is not None:
+                #filecodec = getEncoding(mofile)
+                if False and filecodec is not None:
                     try:
                         mofile = mofile.decode(filecodec)
                     except Exception as errDecode:
@@ -135,6 +135,7 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
     unvisitedURLs.append(entryUrlPath)
 
     def visitURL(targetURL):
+        visitedURLs.add(targetURL)
         global cnt, initialized
         cnt = cnt+1
 
@@ -144,16 +145,25 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
         request = urllib2.urlopen(targetURL)
         content = request.read()
         request.close()
+
+        timer.elapsed()
+
         content = content.decode(getEncoding(content))
+
+        timer.elapsed()
         #soup = BeautifulSoup(content)
         #doc = html.document_fromstring(soup.prettify())
         doc = html.document_fromstring(content)
+
+        timer.elapsed()
 
         #if no all other links, means serve have block this ip
         allOthersLinks = doc.cssselect('td[colspan="2"] a')[1:]
         logger.info( 'allOthersLinks: '+str( len(allOthersLinks) ) )
         if len(allOthersLinks) == 0:
             return 'tryAgain'
+
+        timer.elapsed()
 
         #check first, if there's no cas content here, means there's no need to furthure on
         allCASLinks = doc.cssselect('td.style2 a')
@@ -166,6 +176,7 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
             timer.conditionSleep()
             return 'nodata'
 
+        timer.elapsed()
         logger.info( 'this page contains cas count: %s', len(allCASLinks)/2)
         for alink in allOthersLinks:
             href = alink.get('href')
@@ -179,15 +190,18 @@ def SpiderCASIDList(entryURL, crawlAllPage, cbChemiInfoHandler):
             try:
                 casDetailLink = allCASLinks[i].get('href')
                 casDetailLink = '/'.join([baseHref, casDetailLink])
+                casID = allCASLinks[i].text
 
                 #if visited then ignore
-                if gStatisticHelper.isUrlVisited(casDetailLink):
+
+                #if gStatisticHelper.isUrlVisited(casDetailLink):
+                if (gStatisticHelper.isCASVisited(casID)):
                     logger.info(' %s already visited, so skip it'%casDetailLink)
                     continue
 
                 #visit CAS detail
                 cas = GetCASDetail(casDetailLink)
-                gStatisticHelper.markUrlVisited(casDetailLink)
+                #gStatisticHelper.markUrlVisited(casDetailLink)
                 if cbChemiInfoHandler:
                     cbChemiInfoHandler.process(cas)
             except Exception as err:

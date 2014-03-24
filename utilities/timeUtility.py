@@ -7,6 +7,11 @@ class SleepTimer(object):
         self.starttime = time.clock()
         self.sleepSeconds = sleepSeconds
 
+    def elapsed(self):
+        endtime = time.clock()
+        elapsed = endtime - self.starttime
+        print 'elapsed: %s '%(elapsed)
+
 
     def conditionSleep(self):
         endtime = time.clock()

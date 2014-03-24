@@ -1,6 +1,6 @@
 #html page encoding
 encoding = 'utf-8'
-encoding = None
+#encoding = None
 def getEncoding(content):
     if encoding is None:
         import chardet
